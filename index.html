@@ -6,6 +6,20 @@
 <title>深海の灯 -Abyss Beacons-</title>
 <meta name="theme-color" content="#04121c">
 <meta name="description" content="深海の灯 -Abyss Beacons- を遊ぶ">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="深海の灯 -Abyss Beacons-">
+<meta property="og:title" content="深海の灯 -Abyss Beacons-">
+<meta property="og:description" content="深海の灯をつないで、帰還を目指そう。">
+<meta property="og:image" content="./og-image.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="深海の灯のイメージ画像">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="深海の灯 -Abyss Beacons-">
+<meta name="twitter:description" content="深海の灯をつないで、帰還を目指そう。">
+<meta name="twitter:image" content="./og-image.png">
+<link rel="image_src" href="./og-image.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="深海の灯">
@@ -20,15 +34,16 @@
     --panel-edge:#1b445c;
     --ink:#cfe8f2;
     --ink-dim:#7fa5b5;
-    --coral:#ff6b7a;
-    --sea:#3ec8e0;
-    --jade:#4ade80;
-    --amber:#ffb454;
+    /* 海域ごとに色相と明度を分け、暗い画面でも見分けやすくする */
+    --coral:#ff4d6d;
+    --sea:#3b82f6;
+    --jade:#22c55e;
+    --amber:#f59e0b;
     --abyss:#9d7bff;
-    --glow-coral:rgba(255,107,122,.55);
-    --glow-sea:rgba(62,200,224,.55);
-    --glow-jade:rgba(74,222,128,.55);
-    --glow-amber:rgba(255,180,84,.55);
+    --glow-coral:rgba(255,77,109,.60);
+    --glow-sea:rgba(59,130,246,.65);
+    --glow-jade:rgba(34,197,94,.60);
+    --glow-amber:rgba(245,158,11,.65);
   }
   *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
   html,body{height:100%;}
@@ -181,7 +196,7 @@
     text-align:left;background:rgba(255,255,255,.04);border:1px solid var(--panel-edge);
     color:var(--ink);border-radius:10px;padding:11px 13px;font-size:.8rem;line-height:1.45;cursor:pointer;
   }
-  .choices button:hover:not(:disabled){border-color:var(--sea);background:rgba(62,200,224,.08);}
+  .choices button:hover:not(:disabled){border-color:var(--sea);background:rgba(59,130,246,.08);}
   .choices button:disabled{opacity:.32;cursor:default;}
   .choices button:focus-visible{outline:2px solid var(--sea);outline-offset:1px;}
   .lev-title{color:var(--abyss);text-shadow:0 0 12px rgba(157,123,255,.6);}
@@ -252,8 +267,8 @@
 <!-- Leviathan modal -->
 <div class="overlay" id="ovLev">
   <div class="modal">
-    <h2 class="lev-title">◉ 深海の主が現れた！</h2>
-    <p>暗闇から巨大な影が迫る…… ひとつを選んで切り抜けろ。</p>
+    <h2 class="lev-title" id="levTitle">◉ 深海の主が現れた！</h2>
+    <p id="levText">暗闇から巨大な影が迫る…… ひとつを選んで切り抜けろ。</p>
     <div class="choices" id="levChoices"></div>
   </div>
 </div>
@@ -467,14 +482,17 @@ function afterAction(){
 
 /* ---------- draw & refill ---------- */
 function refill(done){
+  let leviathanCount=0;
   const step=()=>{
     if(S.over){ done(); return; }
     if(S.hand.length>=5 || S.deck.length===0){ done(); return; }
     const card=S.deck.pop();
     if(card.type==="lev"){
+      leviathanCount++;
       S.discard++; // leviathan itself goes to discard
-      showLeviathan(()=>{ render(); step(); });
+      showLeviathan(()=>{ render(); step(); }, leviathanCount);
     }else{
+      leviathanCount=0;
       S.hand.push(card);
       step();
     }
@@ -483,9 +501,18 @@ function refill(done){
 }
 
 /* ---------- leviathan ---------- */
-function showLeviathan(done){
+function showLeviathan(done, encounterNo){
   busy=true;
   const box=$("levChoices"); box.innerHTML="";
+  const title=$("levTitle");
+  const text=$("levText");
+  const count=encounterNo||1;
+  title.textContent=count>1
+    ?"◉ 深海の主がさらに現れた！（"+count+"体目）"
+    :"◉ 深海の主が現れた！";
+  text.textContent=count>1
+    ?"捧げ物で切り抜けた直後、別の影が迫る……もうひとつを選んで切り抜けろ。"
+    :"暗闇から巨大な影が迫る…… ひとつを選んで切り抜けろ。";
   const hasCrystal=S.hand.some(c=>c.symbol==="crystal");
   const hasLit=litTotal()>0;
   const opts=[
