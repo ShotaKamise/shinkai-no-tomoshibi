@@ -310,6 +310,17 @@
   </div>
 </div>
 
+<!-- Crystal discard selection modal -->
+<div class="overlay" id="ovCrystal">
+  <div class="modal">
+    <h2>◆ 探知に使うクリスタルを選択</h2>
+    <p id="crystalText">捨てるクリスタルを1枚選んでください。</p>
+    <div class="decision-state" id="crystalState"></div>
+    <div class="cardrow" id="crystalCards"></div>
+    <div class="okrow"><button id="crystalOk" type="button" disabled>このカードを捨てる</button></div>
+  </div>
+</div>
+
 <!-- Help modal -->
 <div class="overlay" id="ovHelp">
   <div class="modal">
@@ -541,9 +552,8 @@ function playCard(){
   afterAction();
 }
 
-function discardCard(){
-  if(busy||S.over||selected<0) return;
-  const card=S.hand.splice(selected,1)[0];
+function discardCardAt(index){
+  const card=S.hand.splice(index,1)[0];
   selected=-1;
   S.discard++;
   if(card.symbol==="crystal" && S.deck.length>0){
@@ -553,6 +563,62 @@ function discardCard(){
   }
   setMsg(COLORS[card.color].name+"の「"+SYMBOLS[card.symbol].name+"」を捨てた。");
   afterAction();
+}
+
+function chooseCrystalForDiscard(){
+  busy=true;
+  selected=-1;
+  let picked=-1;
+  const candidates=S.hand
+    .map((card,index)=>({card,index}))
+    .filter(item=>item.card.symbol==="crystal");
+  const row=$("crystalCards");
+  const ok=$("crystalOk");
+
+  function draw(){
+    row.innerHTML="";
+    candidates.forEach((item,i)=>{
+      const el=cardEl(item.card,true);
+      el.style.cursor="pointer";
+      el.tabIndex=0;
+      if(i===picked) el.classList.add("picked");
+      const pick=()=>{
+        picked=picked===i?-1:i;
+        ok.disabled=picked<0;
+        draw();
+      };
+      el.addEventListener("click",pick);
+      el.addEventListener("keydown",e=>{
+        if(e.key==="Enter"||e.key===" "){e.preventDefault();pick();}
+      });
+      row.appendChild(el);
+    });
+  }
+
+  $("crystalText").textContent="探知に使うクリスタルを1枚選んでください。残りのクリスタルは手札に残ります。";
+  renderDecisionState("crystalState");
+  ok.disabled=true;
+  ok.onclick=()=>{
+    if(picked<0) return;
+    const handIndex=candidates[picked].index;
+    $("ovCrystal").classList.remove("show");
+    busy=false;
+    discardCardAt(handIndex);
+  };
+  $("ovCrystal").classList.add("show");
+  draw();
+  render();
+}
+
+function discardCard(){
+  if(busy||S.over||selected<0) return;
+  const card=S.hand[selected];
+  const crystalCount=S.hand.filter(c=>c.symbol==="crystal").length;
+  if(card.symbol==="crystal" && crystalCount>1){
+    chooseCrystalForDiscard();
+    return;
+  }
+  discardCardAt(selected);
 }
 
 function afterAction(){
