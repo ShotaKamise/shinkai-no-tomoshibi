@@ -191,6 +191,23 @@
   }
   .modal p{font-size:.8rem;line-height:1.65;color:var(--ink);margin-bottom:10px;}
   .modal .dim{color:var(--ink-dim);font-size:.72rem;}
+  .decision-state{
+    margin:12px 0;padding:9px 10px;border:1px solid var(--panel-edge);
+    border-radius:10px;background:rgba(4,18,28,.58);
+  }
+  .decision-state-title{
+    font-size:.66rem;letter-spacing:.16em;color:var(--ink-dim);margin-bottom:5px;
+  }
+  .decision-state-meta{
+    font-size:.7rem;color:var(--ink);line-height:1.5;margin-bottom:5px;
+  }
+  .decision-beacons{display:flex;flex-wrap:wrap;gap:5px 10px;margin-bottom:4px;}
+  .decision-beacons span{font-size:.66rem;white-space:nowrap;}
+  .decision-path{
+    display:flex;gap:6px;min-height:72px;align-items:center;
+    overflow-x:auto;padding:2px 0 3px;
+  }
+  .decision-path .empty{font-size:.7rem;color:var(--ink-dim);}
   .choices{display:flex;flex-direction:column;gap:8px;margin-top:6px;}
   .choices button{
     text-align:left;background:rgba(255,255,255,.04);border:1px solid var(--panel-edge);
@@ -269,6 +286,7 @@
   <div class="modal">
     <h2 class="lev-title" id="levTitle">◉ 深海の主が現れた！</h2>
     <p id="levText">暗闇から巨大な影が迫る…… ひとつを選んで切り抜けろ。</p>
+    <div class="decision-state" id="levState"></div>
     <div class="choices" id="levChoices"></div>
   </div>
 </div>
@@ -278,6 +296,7 @@
   <div class="modal">
     <h2>◆ 探知（ソナー展開）</h2>
     <p id="proText"></p>
+    <div class="decision-state" id="proState"></div>
     <div class="cardrow" id="proCards"></div>
     <div class="okrow"><button id="proOk" type="button" disabled>確定</button></div>
   </div>
@@ -381,6 +400,45 @@ function cardEl(card, mini){
   el.style.setProperty("--g", c.glow);
   el.innerHTML='<div class="sym">'+s.glyph+'</div><div class="sname">'+s.name+'</div><div class="cname">'+c.name+'</div>';
   return el;
+}
+
+function renderDecisionState(id){
+  const box=$(id);
+  if(!box||!S) return;
+  box.innerHTML="";
+
+  const title=document.createElement("div");
+  title.className="decision-state-title";
+  title.textContent="現在の場（航路）";
+  box.appendChild(title);
+
+  const meta=document.createElement("div");
+  meta.className="decision-state-meta";
+  meta.textContent="灯 "+litTotal()+" / 8　｜　山札 "+S.deck.length+"　｜　捨て札 "+S.discard;
+  box.appendChild(meta);
+
+  const beacons=document.createElement("div");
+  beacons.className="decision-beacons";
+  for(const [key,c] of Object.entries(COLORS)){
+    const item=document.createElement("span");
+    item.style.color=c.css;
+    item.textContent=c.name+" "+S.beacons[key]+"/2";
+    beacons.appendChild(item);
+  }
+  box.appendChild(beacons);
+
+  const path=document.createElement("div");
+  path.className="decision-path";
+  const show=S.path.slice(-6);
+  if(show.length===0){
+    const empty=document.createElement("span");
+    empty.className="empty";
+    empty.textContent="まだカードを置いていません";
+    path.appendChild(empty);
+  }else{
+    show.forEach(c=>path.appendChild(cardEl(c,true)));
+  }
+  box.appendChild(path);
 }
 
 /* ---------- rendering ---------- */
@@ -513,6 +571,7 @@ function showLeviathan(done, encounterNo){
   text.textContent=count>1
     ?"捧げ物で切り抜けた直後、別の影が迫る……もうひとつを選んで切り抜けろ。"
     :"暗闇から巨大な影が迫る…… ひとつを選んで切り抜けろ。";
+  renderDecisionState("levState");
   const hasCrystal=S.hand.some(c=>c.symbol==="crystal");
   const hasLit=litTotal()>0;
   const opts=[
@@ -562,6 +621,7 @@ function startProphecy(done){
   let order=[];            // indices in return order (first = next draw)
 
   const proText=$("proText"), row=$("proCards"), ok=$("proOk");
+  renderDecisionState("proState");
 
   function draw(){
     row.innerHTML="";
