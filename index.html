@@ -208,6 +208,14 @@
     overflow-x:auto;padding:2px 0 3px;
   }
   .decision-path .empty{font-size:.7rem;color:var(--ink-dim);}
+  .decision-state-section{
+    font-size:.66rem;letter-spacing:.14em;color:var(--ink-dim);
+    margin-top:5px;margin-bottom:2px;
+  }
+  .decision-hand{
+    display:flex;gap:6px;min-height:72px;align-items:center;
+    overflow-x:auto;padding:2px 0 3px;
+  }
   .choices{display:flex;flex-direction:column;gap:8px;margin-top:6px;}
   .choices button{
     text-align:left;background:rgba(255,255,255,.04);border:1px solid var(--panel-edge);
@@ -439,6 +447,23 @@ function renderDecisionState(id){
     show.forEach(c=>path.appendChild(cardEl(c,true)));
   }
   box.appendChild(path);
+
+  const handTitle=document.createElement("div");
+  handTitle.className="decision-state-section";
+  handTitle.textContent="手札（"+S.hand.length+"枚）";
+  box.appendChild(handTitle);
+
+  const hand=document.createElement("div");
+  hand.className="decision-hand";
+  if(S.hand.length===0){
+    const empty=document.createElement("span");
+    empty.className="empty";
+    empty.textContent="手札はありません";
+    hand.appendChild(empty);
+  }else{
+    S.hand.forEach(c=>hand.appendChild(cardEl(c,true)));
+  }
+  box.appendChild(hand);
 }
 
 /* ---------- rendering ---------- */
