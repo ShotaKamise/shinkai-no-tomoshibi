@@ -1,4 +1,4 @@
-const CACHE_NAME = "shinkai-no-tomoshibi-v1";
+const CACHE_NAME = "shinkai-no-tomoshibi-v2";
 const APP_SHELL = [
   "./",
   "./index.html",
